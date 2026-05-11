@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+pandas
+pandas-ta
+python-dotenv
+httpx
+jinja2
+websockets
+python-multipart
+yfinance

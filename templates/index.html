@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Trader Pro | Indian Market Assistant</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">
+            <i data-lucide="zap"></i>
+            TRADER AI
+        </div>
+        <ul class="nav-links">
+            <li class="nav-item active"><i data-lucide="layout-dashboard"></i> Dashboard</li>
+            <li class="nav-item"><i data-lucide="trending-up"></i> Live Signals</li>
+            <li class="nav-item"><i data-lucide="layers"></i> Option Chain</li>
+            <li class="nav-item"><i data-lucide="history"></i> Trade History</li>
+            <li class="nav-item"><i data-lucide="settings"></i> Settings</li>
+        </ul>
+        
+        <div style="margin-top: auto;">
+            <div class="card" style="padding: 1rem; font-size: 0.8rem;">
+                <p style="color: var(--text-muted);">Mode: <span style="color: var(--accent-primary);">SIMULATION</span></p>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Status: <span id="ws-status">Connecting...</span></p>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-dashboard">
+        <header>
+            <div>
+                <h1>Market Overview</h1>
+                <p style="color: var(--text-muted);">Real-time AI analysis for Sensex & Nifty</p>
+            </div>
+            <div class="status-badge">
+                <i data-lucide="radio" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                LIVE MARKET
+            </div>
+        </header>
+
+        <section class="stats-grid">
+            <div class="card market-card" id="sensex-card">
+                <h3>SENSEX</h3>
+                <div class="price-row">
+                    <span class="price" id="sensex-price">---</span>
+                    <span class="change" id="sensex-change">---</span>
+                </div>
+            </div>
+            <div class="card market-card" id="nifty-card">
+                <h3>NIFTY 50</h3>
+                <div class="price-row">
+                    <span class="price" id="nifty-price">---</span>
+                    <span class="change" id="nifty-change">---</span>
+                </div>
+            </div>
+            <div class="card market-card">
+                <h3>AI CONFIDENCE</h3>
+                <div class="price-row">
+                    <span class="price" style="color: var(--accent-primary);">84%</span>
+                    <span class="change pos">BULLISH</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="signals-container">
+            <div class="card signals-table-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Active AI Signals</h2>
+                    <button class="status-badge" style="cursor: pointer; background: transparent;">View All</button>
+                </div>
+                <table id="signals-table">
+                    <thead>
+                        <tr>
+                            <th>SYMBOL</th>
+                            <th>TYPE</th>
+                            <th>ENTRY</th>
+                            <th>TARGET 1</th>
+                            <th>STOP LOSS</th>
+                            <th>CONFIDENCE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="signals-body">
+                        <!-- Signals will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="card">
+                <h2>Market Pulse</h2>
+                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                    <div class="card" style="background: rgba(255,255,255,0.03);">
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Trend Detection</p>
+                        <p style="font-weight: 600;">Strong Bullish Momentum</p>
+                    </div>
+                    <div class="card" style="background: rgba(255,255,255,0.03);">
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Breakout Alert</p>
+                        <p style="font-weight: 600;">Sensex 72k Resistance Break</p>
+                    </div>
+                    <div class="card" style="background: rgba(255,255,255,0.03);">
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Volume/OI</p>
+                        <p style="font-weight: 600;">Heavy CE Writing at 72500</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/js/app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
