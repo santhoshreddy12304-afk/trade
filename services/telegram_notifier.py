@@ -1,3 +1,4 @@
+from datetime import datetime
 import httpx
 import os
 from dotenv import load_dotenv
@@ -41,5 +42,4 @@ class TelegramNotifier:
         )
         return await self.send_message(text)
 
-from datetime import datetime
 notifier = TelegramNotifier()

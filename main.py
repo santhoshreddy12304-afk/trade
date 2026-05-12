@@ -14,7 +14,41 @@ from services.signal_engine import signal_engine
 from services.telegram_notifier import notifier
 from services.paper_trading import paper_trader
 
-app = FastAPI(title="AI Trading Assistant")
+from contextlib import asynccontextmanager
+
+# Background task for Telegram signals
+async def signal_bot_task():
+    print("Background Signal Bot Started...")
+    while True:
+        try:
+            for symbol in ["SENSEX", "NIFTY 50"]:
+                signal = await signal_engine.generate_signal(symbol)
+                if signal:
+                    # Save to DB
+                    db = next(get_db())
+                    new_signal = Signal(**signal)
+                    db.add(new_signal)
+                    db.commit()
+                    
+                    print(f"BOT Generated Signal: {signal['type']} {signal['symbol']} @ {signal['entry_price']}")
+                    await notifier.send_signal(signal)
+            
+            # Check market every 5 minutes (300 seconds)
+            await asyncio.sleep(300)
+        except Exception as e:
+            print(f"Error in background signal bot: {e}")
+            await asyncio.sleep(60) # Wait a bit before retrying if error
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup actions
+    init_db()
+    task = asyncio.create_task(signal_bot_task())
+    yield
+    # Shutdown actions
+    task.cancel()
+
+app = FastAPI(title="AI Trading Assistant", lifespan=lifespan)
 
 # Add CORS Middleware
 app.add_middleware(
@@ -29,13 +63,9 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Initialize Database
-@app.on_event("startup")
-async def startup_event():
-    init_db()
-
 @app.get("/")
 async def read_root(request: Request):
+
     return templates.TemplateResponse("index.html", {"request": request})
 
 @app.get("/api/signals")
@@ -71,25 +101,16 @@ async def websocket_market(websocket: WebSocket):
             sensex = await market_service.get_live_data("SENSEX")
             nifty = await market_service.get_live_data("NIFTY 50")
             
-            # Occasionally generate a signal for the demo
-            if random.random() > 0.98:
-                signal = await signal_engine.generate_signal("SENSEX")
-                if signal:
-                    # Save to DB
-                    db = next(get_db())
-                    new_signal = Signal(**signal)
-                    db.add(new_signal)
-                    db.commit()
-                    # Notify Telegram
-                    await notifier.send_signal(signal)
-                    # Send signal over websocket
-                    await websocket.send_text(json.dumps({"type": "SIGNAL", "data": signal}))
-
+            # Websocket now only pushes real live data. 
+            # Signal generation is handled cleanly by the background bot task.
+            # But we can query the DB for the latest signal to push to UI if needed, 
+            # or just let the UI poll /api/signals.
+            
             await websocket.send_text(json.dumps({
                 "type": "MARKET_UPDATE",
                 "data": {"SENSEX": sensex, "NIFTY": nifty}
             }))
-            await asyncio.sleep(2) # Update every 2 seconds
+            await asyncio.sleep(5) # Update UI every 5 seconds
     except WebSocketDisconnect:
         print("Client disconnected from WebSocket")
     except Exception as e:
