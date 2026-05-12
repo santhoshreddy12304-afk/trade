@@ -17,20 +17,31 @@ from services.paper_trading import paper_trader
 from contextlib import asynccontextmanager
 
 # Background task for Telegram signals
+last_sideways_warning = None
+
 async def signal_bot_task():
+    global last_sideways_warning
     print("Background Signal Bot Started...")
     while True:
         try:
-            for symbol in ["SENSEX", "NIFTY 50"]:
-                signal = await signal_engine.generate_signal(symbol)
-                if signal:
+            signal = await signal_engine.scan_markets()
+            
+            if signal:
+                if signal.get("status") == "SIDEWAYS":
+                    now = datetime.now()
+                    # Only send sideways warning once every hour
+                    if not last_sideways_warning or (now - last_sideways_warning).total_seconds() > 3600:
+                        print("BOT: Market Sideways. Sending warning.")
+                        await notifier.send_sideways_warning()
+                        last_sideways_warning = now
+                else:
                     # Save to DB
                     db = next(get_db())
-                    new_signal = Signal(**signal)
+                    new_signal = Signal(**{k: v for k, v in signal.items() if hasattr(Signal, k)})
                     db.add(new_signal)
                     db.commit()
                     
-                    print(f"BOT Generated Signal: {signal['type']} {signal['symbol']} @ {signal['entry_price']}")
+                    print(f"BOT Generated Signal: {signal['type']} {signal['symbol']} @ {signal['live_premium']}")
                     await notifier.send_signal(signal)
             
             # Check market every 5 minutes (300 seconds)
