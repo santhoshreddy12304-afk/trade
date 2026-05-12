@@ -9,3 +9,4 @@ jinja2
 websockets
 python-multipart
 yfinance
+jugaad-data
