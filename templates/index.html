@@ -29,9 +29,10 @@
         </ul>
         
         <div style="margin-top: auto;">
-            <div class="card" style="padding: 1rem; font-size: 0.8rem;">
-                <p style="color: var(--text-muted);">Mode: <span style="color: var(--accent-primary);">SIMULATION</span></p>
-                <p style="color: var(--text-muted); margin-top: 0.5rem;">Status: <span id="ws-status">Connecting...</span></p>
+            <div class="card" style="padding: 1rem; font-size: 0.8rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <p style="color: var(--text-muted);">Broker: <span id="broker-name" style="color: var(--text-main);">---</span></p>
+                <p style="color: var(--text-muted);">Mode: <span id="trading-mode" style="color: var(--accent-primary);">SIMULATION</span></p>
+                <p style="color: var(--text-muted);">Status: <span id="ws-status">Connecting...</span></p>
             </div>
         </div>
     </aside>

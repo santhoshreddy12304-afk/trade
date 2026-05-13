@@ -14,6 +14,7 @@ from services.market_data import market_service
 from services.signal_engine import signal_engine
 from services.telegram_notifier import notifier
 from services.paper_trading import paper_trader
+from services.groww_broker import groww_broker
 
 from contextlib import asynccontextmanager
 
@@ -104,8 +105,25 @@ async def get_market_summary():
 
 @app.post("/api/trade/execute")
 async def execute_trade(data: dict):
+    mode = os.getenv("TRADING_MODE", "simulation").lower()
+    
+    # Always log as paper trade for internal tracking
     trade = paper_trader.execute_trade(data['symbol'], data['type'], data['price'])
+    
+    if mode == "live":
+        qty = data.get("quantity", 1)
+        broker_res = groww_broker.place_order(data['symbol'], data['type'], qty, data['price'])
+        return {"trade": trade, "broker": broker_res}
+        
     return trade
+
+@app.get("/api/broker/status")
+async def get_broker_status():
+    return {
+        "mode": os.getenv("TRADING_MODE", "simulation"),
+        "connected": groww_broker.client is not None,
+        "broker": "Groww"
+    }
 
 @app.get("/api/trades/open")
 async def get_open_trades():

@@ -11,7 +11,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const niftyPrice = document.getElementById('nifty-price');
     const niftyChange = document.getElementById('nifty-change');
     const signalsBody = document.getElementById('signals-body');
+    const brokerName = document.getElementById('broker-name');
+    const tradingMode = document.getElementById('trading-mode');
 
+    // Fetch Broker Status
+    fetch(`${window.location.protocol}//${API_BASE_URL}/api/broker/status`)
+        .then(res => res.json())
+        .then(data => {
+            if (brokerName) brokerName.innerText = data.broker;
+            if (tradingMode) {
+                tradingMode.innerText = data.mode.toUpperCase();
+                tradingMode.style.color = data.mode === 'live' ? '#ff3e3e' : '#00ff9d';
+            }
+        });
     // Initialize WebSocket
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const socket = new WebSocket(`${protocol}//${API_BASE_URL}/ws/market`);
