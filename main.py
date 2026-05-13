@@ -7,7 +7,8 @@ from sqlalchemy.orm import Session
 import asyncio
 import json
 import os
-from datetime import datetime
+import pytz
+from datetime import datetime, time
 from database import get_db
 from models import init_db, Signal, Trade
 from services.market_data import market_service
@@ -20,11 +21,43 @@ from contextlib import asynccontextmanager
 
 active_connections = set()
 
+def is_market_open():
+    """Checks if the Indian stock market is open (9:15 AM - 3:30 PM IST)."""
+    ist = pytz.timezone('Asia/Kolkata')
+    now = datetime.now(ist)
+    
+    # Weekends check
+    if now.weekday() >= 5:
+        return False, "Market is closed (Weekend)"
+        
+    start_time = now.replace(hour=9, minute=15, second=0, microsecond=0)
+    end_time = now.replace(hour=15, minute=30, second=0, microsecond=0)
+    
+    if now < start_time:
+        return False, f"Market opens at 9:15 AM IST. Current IST: {now.strftime('%H:%M')}"
+    if now > end_time:
+        return False, "Market closed for today."
+        
+    return True, "LIVE"
+
 # Background task for Telegram signals
 async def signal_bot_task():
     print("Background Signal Bot Started...")
     while True:
         try:
+            market_live, status_msg = is_market_open()
+            
+            if not market_live:
+                print(f"BOT: {status_msg}")
+                # Optional: Send heartbeat once an hour when closed
+                ist = pytz.timezone('Asia/Kolkata')
+                now = datetime.now(ist)
+                if now.minute < 5: 
+                    await notifier.send_message(f"💤 *Bot Standby*: {status_msg}\nNext live scan starts at 9:15 AM IST.")
+                await asyncio.sleep(300) # Check again in 5 mins
+                continue
+
+            print(f"BOT: Scanning markets (IST {datetime.now(pytz.timezone('Asia/Kolkata')).strftime('%H:%M')})...")
             signal = await signal_engine.scan_markets()
             
             if signal:
@@ -52,15 +85,15 @@ async def signal_bot_task():
                         except:
                             pass
             else:
-                # Always send a heartbeat if no signal found
-                await notifier.send_message("🔍 *Bot Active*: Scanning NIFTY & BANKNIFTY...\nNo high-probability setups found right now.")
+                # Still active but no high-prob setup
+                await notifier.send_message("🔍 *Bot Scanning*: NIFTY, BANKNIFTY & SENSEX...\nNo high-probability setups found in the last 5 minutes.")
             
-            # Check market every 5 minutes (300 seconds)
+            # Continuous 5-minute cycle
             await asyncio.sleep(300)
         except Exception as e:
             print(f"Error in background signal bot: {e}")
             await notifier.send_message(f"⚠️ *Bot Error*: {str(e)[:50]}... Retrying in 60s.")
-            await asyncio.sleep(60) # Wait a bit before retrying if error
+            await asyncio.sleep(60) 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
