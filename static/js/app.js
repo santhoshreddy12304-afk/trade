@@ -81,4 +81,27 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             data.forEach(signal => addSignalToTable(signal));
         });
+
+    // Handle Force Signal Button
+    const forceSignalBtn = document.getElementById('force-signal-btn');
+    if (forceSignalBtn) {
+        forceSignalBtn.addEventListener('click', async () => {
+            forceSignalBtn.disabled = true;
+            const originalContent = forceSignalBtn.innerHTML;
+            forceSignalBtn.innerHTML = '<i data-lucide="loader" class="spin"></i> SCANNING...';
+            lucide.createIcons();
+            
+            try {
+                await fetch(`${httpProtocol}//${API_BASE_URL}/api/force-signal`, { method: 'POST' });
+            } catch (err) {
+                console.error("Error forcing signal:", err);
+            } finally {
+                setTimeout(() => {
+                    forceSignalBtn.disabled = false;
+                    forceSignalBtn.innerHTML = originalContent;
+                    lucide.createIcons();
+                }, 1500);
+            }
+        });
+    }
 });

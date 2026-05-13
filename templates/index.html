@@ -38,9 +38,15 @@
                 <h1>Market Overview</h1>
                 <p style="color: var(--text-muted);">Real-time AI analysis for Sensex & Nifty</p>
             </div>
-            <div class="status-badge">
-                <i data-lucide="radio" style="width: 14px; height: 14px; vertical-align: middle;"></i>
-                LIVE MARKET
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <button id="force-signal-btn" class="status-badge" style="cursor: pointer; background: var(--accent-primary); color: black; border: none; font-weight: 800; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i data-lucide="zap" style="width: 14px; height: 14px;"></i>
+                    GENERATE SIGNAL
+                </button>
+                <div class="status-badge">
+                    <i data-lucide="radio" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+                    LIVE MARKET
+                </div>
             </div>
         </header>
 

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 import asyncio
 import json
 import os
+from datetime import datetime
 from database import get_db
 from models import init_db, Signal, Trade
 from services.market_data import market_service
@@ -16,11 +17,10 @@ from services.paper_trading import paper_trader
 
 from contextlib import asynccontextmanager
 
-# Background task for Telegram signals
-last_sideways_warning = None
+active_connections = set()
 
+# Background task for Telegram signals
 async def signal_bot_task():
-    global last_sideways_warning
     print("Background Signal Bot Started...")
     while True:
         try:
@@ -28,12 +28,8 @@ async def signal_bot_task():
             
             if signal:
                 if signal.get("status") == "SIDEWAYS":
-                    now = datetime.now()
-                    # Only send sideways warning once every hour
-                    if not last_sideways_warning or (now - last_sideways_warning).total_seconds() > 3600:
-                        print("BOT: Market Sideways. Sending warning.")
-                        await notifier.send_sideways_warning()
-                        last_sideways_warning = now
+                    print("BOT: Market Sideways. Sending warning.")
+                    await notifier.send_sideways_warning()
                 else:
                     # Save to DB
                     db = next(get_db())
@@ -43,11 +39,26 @@ async def signal_bot_task():
                     
                     print(f"BOT Generated Signal: {signal['type']} {signal['symbol']} @ {signal['live_premium']}")
                     await notifier.send_signal(signal)
+                    
+                    # Broadcast to websockets
+                    signal_ws = dict(signal)
+                    if isinstance(signal_ws.get("timestamp"), datetime):
+                        signal_ws["timestamp"] = signal_ws["timestamp"].isoformat()
+                    
+                    for conn in list(active_connections):
+                        try:
+                            await conn.send_text(json.dumps({"type": "SIGNAL", "data": signal_ws}))
+                        except:
+                            pass
+            else:
+                # Always send a heartbeat if no signal found
+                await notifier.send_message("🔍 *Bot Active*: Scanning NIFTY & BANKNIFTY...\nNo high-probability setups found right now.")
             
             # Check market every 5 minutes (300 seconds)
             await asyncio.sleep(300)
         except Exception as e:
             print(f"Error in background signal bot: {e}")
+            await notifier.send_message(f"⚠️ *Bot Error*: {str(e)[:50]}... Retrying in 60s.")
             await asyncio.sleep(60) # Wait a bit before retrying if error
 
 @asynccontextmanager
@@ -104,9 +115,52 @@ async def close_trade(data: dict):
     trade = paper_trader.close_trade(data['trade_id'], data['exit_price'])
     return trade
 
+@app.post("/api/force-signal")
+async def force_signal():
+    """Generates a test signal instantly for UI and Telegram"""
+    signal = {
+        "market": "NIFTY 50",
+        "market_state": "TRENDING (BULLISH)",
+        "symbol": "NIFTY 50 16MAY 22000 CE",
+        "type": "BUY CALL",
+        "spot_price": 22000,
+        "live_premium": 95.5,
+        "entry_min": 93.0,
+        "entry_max": 97.0,
+        "stop_loss": 80.0,
+        "target_1": 125.0,
+        "target_2": 150.0,
+        "confidence": 99.0,
+        "expiry": "16MAY",
+        "reasons": ["Test Signal User Requested", "Instant Breakout Detected"],
+        "timestamp": datetime.now()
+    }
+    
+    # Save to DB
+    db = next(get_db())
+    new_signal = Signal(**{k: v for k, v in signal.items() if hasattr(Signal, k)})
+    db.add(new_signal)
+    db.commit()
+    
+    # Send to Telegram
+    await notifier.send_signal(signal)
+    
+    # Broadcast to websocket
+    signal_ws = dict(signal)
+    signal_ws["timestamp"] = signal_ws["timestamp"].isoformat()
+    
+    for conn in list(active_connections):
+        try:
+            await conn.send_text(json.dumps({"type": "SIGNAL", "data": signal_ws}))
+        except Exception as e:
+            print(f"WS send error: {e}")
+            
+    return {"status": "success", "signal": signal}
+
 @app.websocket("/ws/market")
 async def websocket_market(websocket: WebSocket):
     await websocket.accept()
+    active_connections.add(websocket)
     try:
         while True:
             sensex = await market_service.get_live_data("SENSEX")
@@ -126,4 +180,6 @@ async def websocket_market(websocket: WebSocket):
         print("Client disconnected from WebSocket")
     except Exception as e:
         print(f"WebSocket Error: {e}")
+    finally:
+        active_connections.discard(websocket)
 
