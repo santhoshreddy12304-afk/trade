@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Trader Pro | Indian Market Assistant</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#0a0b10">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -97,20 +101,47 @@
                 </table>
             </div>
 
-            <div class="card">
-                <h2>Market Pulse</h2>
-                <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-                    <div class="card" style="background: rgba(255,255,255,0.03);">
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">Trend Detection</p>
-                        <p style="font-weight: 600;">Strong Bullish Momentum</p>
+            <div class="side-panel">
+                <div class="card">
+                    <h2>Signal Analysis</h2>
+                    <div class="signal-strength-container">
+                        <div class="meter">
+                            <div class="meter-fill" style="width: 84%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            <span>WEAK</span>
+                            <span style="color: var(--accent-primary); font-weight: 800;">84% STRONG</span>
+                            <span>MAX</span>
+                        </div>
                     </div>
-                    <div class="card" style="background: rgba(255,255,255,0.03);">
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">Breakout Alert</p>
-                        <p style="font-weight: 600;">Sensex 72k Resistance Break</p>
+                </div>
+
+                <div class="card">
+                    <h2>Market Pulse</h2>
+                    <div style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <div class="pulse-item">
+                            <p class="label">Trend Detection</p>
+                            <p class="value">Strong Bullish Momentum</p>
+                        </div>
+                        <div class="pulse-item">
+                            <p class="label">Breakout Alert</p>
+                            <p class="value">Nifty 22k Resistance Break</p>
+                        </div>
+                        <div class="pulse-item">
+                            <p class="label">Volume/OI</p>
+                            <p class="value">Heavy CE Writing at 22500</p>
+                        </div>
                     </div>
-                    <div class="card" style="background: rgba(255,255,255,0.03);">
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">Volume/OI</p>
-                        <p style="font-weight: 600;">Heavy CE Writing at 72500</p>
+                </div>
+
+                <div class="card" style="background: linear-gradient(135deg, rgba(0, 255, 157, 0.1) 0%, rgba(10, 11, 16, 0.5) 100%);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h2 style="font-size: 1rem;">Live Portfolio</h2>
+                        <span class="badge badge-buy">ACTIVE</span>
+                    </div>
+                    <div style="margin-top: 1rem;">
+                        <p style="font-size: 1.5rem; font-weight: 800;">₹ 14,250.00</p>
+                        <p style="color: var(--accent-primary); font-size: 0.8rem;">+₹ 1,240 (8.5%) Today</p>
                     </div>
                 </div>
             </div>

@@ -186,6 +186,48 @@ td {
     animation: glow 2s infinite;
 }
 
+/* Side Panel & Components */
+.side-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.meter {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    margin-top: 1.5rem;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+}
+
+.meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff9d, #00d4ff);
+    box-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+    border-radius: 10px;
+}
+
+.pulse-item {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1rem;
+    border-radius: 12px;
+    border-left: 3px solid var(--accent-primary);
+}
+
+.pulse-item .label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+}
+
+.pulse-item .value {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
 @media (max-width: 1024px) {
     .signals-container {
         grid-template-columns: 1fr;

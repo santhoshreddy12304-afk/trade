@@ -87,8 +87,9 @@ templates = Jinja2Templates(directory="templates")
 
 @app.get("/")
 async def read_root(request: Request):
-
-    return templates.TemplateResponse("index.html", {"request": request})
+    return templates.TemplateResponse(
+        request=request, name="index.html", context={"request": request}
+    )
 
 @app.get("/api/signals")
 async def get_signals(db: Session = Depends(get_db)):
