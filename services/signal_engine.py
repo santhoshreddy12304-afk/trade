@@ -14,8 +14,8 @@ from services.market_data import market_service
 
 class SignalEngine:
     def __init__(self):
-        self.min_confidence = 70.0
-        self.max_premium = 100.0
+        self.min_confidence = 65.0 # Lowered from 70
+        self.max_premium = 250.0   # Increased from 100
 
     def calculate_indicators(self, df):
         """Calculates MACD, BB, VWAP, RSI, EMA, ATR for the dataframe."""
@@ -57,17 +57,15 @@ class SignalEngine:
             if item.get('expiryDate') == nearest_expiry:
                 opt_data = item.get(option_type)
                 if opt_data and opt_data.get('lastPrice', 0) > 0:
+                    # Ensure strike price is available in the option object
+                    opt_data['strikePrice'] = item.get('strikePrice')
                     options.append(opt_data)
 
         if not options: return None
 
-        # 2. Smart Strike Selection (<100 premium)
-        # Filter for premium < max_premium and sort by how close strike is to spot
-        valid_options = [opt for opt in options if opt['lastPrice'] <= self.max_premium and opt.get('totalTradedVolume', 0) > 1000]
-        
-        if not valid_options:
-            # Fallback if strict liquidity fails but price is under 100
-            valid_options = [opt for opt in options if opt['lastPrice'] <= self.max_premium]
+        # 2. Smart Strike Selection
+        # Filter for premium < max_premium. Liquidity check is secondary.
+        valid_options = [opt for opt in options if opt['lastPrice'] <= self.max_premium]
         
         if not valid_options: return None
 
@@ -106,37 +104,59 @@ class SignalEngine:
         macd_signal = latest.get("macd_signal", 0)
         atr = latest.get("atr", spot_price * 0.002) # Fallback ATR
         
-        # Sideways Filter
-        is_sideways = (45 < rsi < 55) and (abs(ema9 - ema21) < (spot_price * 0.0005))
+        # Sideways Filter - Loosened criteria
+        diff = abs(ema9 - ema21)
+        threshold = spot_price * 0.0003 # Reduced from 0.0005
+        is_sideways = (48 < rsi < 52) and (diff < threshold)
+        
+        print(f"DEBUG [{index}]: Price: {spot_price}, RSI: {rsi:.2f}, EMA9: {ema9:.2f}, EMA21: {ema21:.2f}, Diff: {diff:.2f}, Threshold: {threshold:.2f}")
+        print(f"DEBUG [{index}]: MACD: {macd_line:.2f}, MACD_Signal: {macd_signal:.2f}, VWAP: {vwap}")
+
         if is_sideways: 
+            print(f"DEBUG [{index}]: Market Sideways (RSI: {rsi:.2f}, Diff: {diff:.2f} < {threshold:.2f})")
             return {"status": "SIDEWAYS"}
 
         trend = None
         reasons = []
         confidence = 0.0
 
-        # Bullish Conditions
-        if spot_price > vwap and ema9 > ema21 and rsi > 55 and macd_line > macd_signal:
+        # Bullish Conditions - Removed VWAP dependency as it's often nan for indices
+        if ema9 > ema21 and rsi > 52 and macd_line > macd_signal:
             trend = "BUY CALL"
-            confidence = min(95.0, 70.0 + ((rsi - 50) / 2))
-            reasons = ["EMA bullish crossover", "Price above VWAP", "RSI bullish (>55)", "MACD momentum positive"]
+            confidence = min(95.0, 65.0 + ((rsi - 50) * 2))
+            reasons = ["EMA bullish crossover", "RSI momentum positive (>52)", "MACD bullish crossover"]
+            if not np.isnan(vwap) and spot_price > vwap:
+                reasons.append("Price above VWAP (Bullish)")
+                confidence += 5
+                
         # Bearish Conditions
-        elif spot_price < vwap and ema9 < ema21 and rsi < 45 and macd_line < macd_signal:
+        elif ema9 < ema21 and rsi < 48 and macd_line < macd_signal:
             trend = "BUY PUT"
-            confidence = min(95.0, 70.0 + ((50 - rsi) / 2))
-            reasons = ["EMA bearish crossover", "Price below VWAP", "RSI bearish (<45)", "MACD momentum negative"]
+            confidence = min(95.0, 65.0 + ((50 - rsi) * 2))
+            reasons = ["EMA bearish crossover", "RSI momentum negative (<48)", "MACD bearish crossover"]
+            if not np.isnan(vwap) and spot_price < vwap:
+                reasons.append("Price below VWAP (Bearish)")
+                confidence += 5
 
-        if not trend or confidence < self.min_confidence: return None
+        if not trend:
+            print(f"DEBUG [{index}]: No trend detected. RSI: {rsi:.2f}, Spot: {spot_price}, VWAP: {vwap:.2f}, MACD: {macd_line:.2f} > {macd_signal:.2f}")
+            return None
+            
+        if confidence < self.min_confidence:
+            print(f"DEBUG [{index}]: Low confidence: {confidence:.2f} < {self.min_confidence}")
+            return None
 
-        # 3. Live Option Chain Integration
         oc_records = market_service.get_live_option_chain(index)
         if not oc_records:
+            print(f"DEBUG [{index}]: No option chain data received")
             return None # Skip if no option data
 
         option_type = "CE" if "CALL" in trend else "PE"
         best_opt = self.find_best_option(oc_records, spot_price, option_type)
         
-        if not best_opt: return None # No option under 100 found
+        if not best_opt:
+            print(f"DEBUG [{index}]: No suitable {option_type} option found under ₹{self.max_premium}")
+            return None # No option under 100 found
 
         premium = best_opt['premium']
         
@@ -150,7 +170,7 @@ class SignalEngine:
         t1 = premium + reward_per_lot
         t2 = premium + (reward_per_lot * 1.8)
 
-        reasons.append(f"Premium below ₹100 constraint (₹{premium})")
+        reasons.append(f"Premium under ₹{self.max_premium} constraint (₹{premium})")
         if best_opt['volume'] > 5000: reasons.append("High option liquidity")
 
         return {

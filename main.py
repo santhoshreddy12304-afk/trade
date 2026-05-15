@@ -167,6 +167,29 @@ async def close_trade(data: dict):
     trade = paper_trader.close_trade(data['trade_id'], data['exit_price'])
     return trade
 
+@app.get("/api/option-chain/{index}")
+async def get_option_chain(index: str):
+    data = market_service.get_live_option_chain(index)
+    if not data:
+        return {"error": "Option chain data not available for this index"}
+    return data
+
+@app.get("/api/trades/history")
+async def get_trade_history(db: Session = Depends(get_db)):
+    trades = db.query(Trade).order_by(Trade.timestamp.desc()).all()
+    return trades
+
+@app.get("/api/portfolio")
+async def get_portfolio_summary():
+    # Mix of paper trading and broker data if available
+    paper_stats = paper_trader.get_stats()
+    broker_data = groww_broker.get_portfolio()
+    return {
+        "paper": paper_stats,
+        "broker": broker_data,
+        "mode": os.getenv("TRADING_MODE", "simulation")
+    }
+
 @app.post("/api/force-signal")
 async def force_signal():
     """Generates a test signal instantly for UI and Telegram"""
@@ -234,4 +257,8 @@ async def websocket_market(websocket: WebSocket):
         print(f"WebSocket Error: {e}")
     finally:
         active_connections.discard(websocket)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
 

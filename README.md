@@ -4,10 +4,13 @@ A professional, AI-powered trading dashboard for Sensex and Nifty options.
 
 ## Features
 - **Real-time Dashboard**: Live tracking of Sensex & Nifty.
-- **AI Signal Engine**: Automated Buy/Sell signals with SL and Targets.
+- **AI Signal Engine**: Automated Buy/Sell signals with SL and Targets using MACD, RSI, and EMA.
+- **Multi-View Interface**: Switch between Dashboard, Signals, Option Chain, and Trade History.
+- **Live Option Chain**: Real-time market depth and premium tracking for NIFTY/BANKNIFTY.
+- **Trade History**: Persistent logging of all trades with PnL tracking.
 - **Telegram Integration**: Instant alerts to your Telegram bot.
-- **Paper Trading**: Test strategies without real money.
-- **Premium UI**: Dark modern design with glassmorphism.
+- **Paper Trading**: Test strategies with a built-in simulation engine.
+- **Premium UI**: Modern dark glassmorphism design with Lucide icons.
 
 ## Setup Instructions
 

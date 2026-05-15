@@ -7,6 +7,22 @@
     --text-muted: #888888;
     --glass-border: rgba(255, 255, 255, 0.1);
     --neon-glow: 0 0 15px rgba(0, 255, 157, 0.3);
+    --emergency-red: #ff3e3e;
+    --emergency-red-soft: rgba(255, 62, 62, 0.2);
+}
+
+.view-section {
+    display: none;
+    animation: viewFadeIn 0.4s ease-out;
+}
+
+.view-section.active {
+    display: block;
+}
+
+@keyframes viewFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 * {
@@ -163,6 +179,40 @@ th {
 td {
     padding: 1rem;
     border-bottom: 1px solid var(--glass-border);
+    font-size: 0.9rem;
+}
+
+/* Option Chain Styles */
+.oc-container {
+    overflow-x: auto;
+    margin-top: 1rem;
+}
+
+#oc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+#oc-table th {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 0.75rem;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+#oc-table td {
+    padding: 0.5rem;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.ce-header { background: rgba(0, 255, 157, 0.05) !important; color: var(--accent-primary); }
+.pe-header { background: rgba(255, 62, 62, 0.05) !important; color: var(--accent-secondary); }
+.strike-header { background: rgba(255, 255, 255, 0.1) !important; font-weight: 800; }
+
+.atm-row {
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .badge {
@@ -235,9 +285,36 @@ td {
 }
 
 @media (max-width: 768px) {
-    body { flex-direction: column; }
-    .sidebar { width: 100%; height: auto; position: relative; }
+    body { flex-direction: column; padding-bottom: 70px; }
+    .sidebar { display: none; }
+    .main-dashboard { padding: 1rem; }
+    
+    .mobile-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(15, 17, 26, 0.98);
+        border-top: 1px solid var(--glass-border);
+        justify-content: space-around;
+        padding: 0.75rem;
+        z-index: 1000;
+        backdrop-filter: blur(10px);
+    }
+
+    .mobile-nav .nav-item {
+        padding: 0.5rem;
+        border-radius: 50%;
+    }
+
+    .stats-grid { grid-template-columns: 1fr; }
+    .price { font-size: 1.5rem; }
+    
+    header h1 { font-size: 1.25rem; }
 }
+
+.mobile-nav { display: none; }
 
 /* Animations */
 @keyframes spin {

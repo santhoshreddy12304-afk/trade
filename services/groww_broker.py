@@ -1,6 +1,15 @@
 import os
 import logging
-from growwapi import GrowwAPI
+try:
+    from growwapi import GrowwAPI
+except ImportError:
+    # Fallback/Mock for missing library
+    class GrowwAPI:
+        def __init__(self, **kwargs): pass
+        def place_order(self, **kwargs): return {"status": "mock", "message": "Library missing"}
+        def get_holdings(self): return []
+        def get_positions(self): return []
+
 from dotenv import load_dotenv
 
 load_dotenv()

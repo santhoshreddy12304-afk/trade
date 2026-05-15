@@ -12,3 +12,5 @@ yfinance
 jugaad-data
 growwapi
 pytz
+gunicorn
+uvicorn[standard]

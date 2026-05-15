@@ -44,4 +44,18 @@ class PaperTradingService:
         finally:
             db.close()
 
+    def get_stats(self):
+        db = SessionLocal()
+        try:
+            total_trades = db.query(Trade).count()
+            closed_trades = db.query(Trade).filter(Trade.status == "CLOSED").all()
+            total_pnl = sum([t.pnl for t in closed_trades])
+            return {
+                "total_trades": total_trades,
+                "total_pnl": round(total_pnl, 2),
+                "open_count": db.query(Trade).filter(Trade.status == "OPEN").count()
+            }
+        finally:
+            db.close()
+
 paper_trader = PaperTradingService()

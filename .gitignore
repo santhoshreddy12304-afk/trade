@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.env
+*.db
+.pytest_cache/
+.vscode/
+.idea/
+node_modules/
+scratch/
+.gemini/
